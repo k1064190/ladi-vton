@@ -147,6 +147,10 @@ def main():
             output_img = Image.fromarray(np.asarray(parsing_result, dtype=np.uint8))
             output_img.putpalette(palette)
             output_img.save(parsing_result_path)
+
+            # upsampled output to numpy array
+            upsample_output = upsample_output.data.cpu().numpy()
+
             cv2.imwrite(f'{args.output_dir}/{img_name[:-4]}_cv2.png', upsample_output[:, :, 0])
             cv2.imwrite(f'{args.output_dir}/{img_name[:-4]}_edge.png', upsample_output[:, :, 0]*255)
             if args.logits:
