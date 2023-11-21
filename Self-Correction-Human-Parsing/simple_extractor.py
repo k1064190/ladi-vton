@@ -12,6 +12,8 @@
 """
 
 import os
+
+import cv2
 import torch
 import argparse
 import numpy as np
@@ -141,11 +143,12 @@ def main():
 
             logits_result = transform_logits(upsample_output.data.cpu().numpy(), c, s, w, h, input_size=input_size)
             parsing_result = np.argmax(logits_result, axis=2)
-            print(parsing_result)
             parsing_result_path = os.path.join(args.output_dir, img_name[:-4] + '.jpg')
             output_img = Image.fromarray(np.asarray(parsing_result, dtype=np.uint8))
             output_img.putpalette(palette)
             output_img.save(parsing_result_path)
+            cv2.imwrite(f'{args.output_dir}/{img_name[:-4]}_cv2.png', upsample_output[0, :, :, 0])
+            cv2.imwrite(f'{args.output_dir}/{img_name[:-4]}_edge.png', upsample_output[0, :, :, 0]*255)
             if args.logits:
                 logits_result_path = os.path.join(args.output_dir, img_name[:-4] + '.npy')
                 np.save(logits_result_path, logits_result)
