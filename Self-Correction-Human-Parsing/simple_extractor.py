@@ -145,7 +145,7 @@ def main():
             parsing_result = np.argmax(logits_result, axis=2)
             parsing_result_path = os.path.join(args.output_dir, img_name[:-4] + '.png')
             output_img = Image.fromarray(np.asarray(parsing_result, dtype=np.uint8))
-            # output_img.putpalette(palette)
+            output_img.putpalette(palette)
             output_img.save(parsing_result_path)
 
             if args.logits:
