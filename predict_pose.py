@@ -88,9 +88,12 @@ def generate_pose_keypoints(img_file, pose_file):
 
     res_points = pose_model.predict(img_file)
     
-    pose_data = {"version": 1,
+    pose_data = {"version": 1.3,
                  "people":  [
-                                {"pose_keypoints": res_points}
+                                {
+                                    "person_id": [-1],
+                                    "pose_keypoints_2d": res_points
+                                }
                             ]
                 }
 

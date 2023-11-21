@@ -153,10 +153,10 @@ class VitonHDDataset(data.Dataset):
                 )
 
         labels = {
-            0: ['background', [0, 10]],  # 0 is background, 10 is neck
+            0: ['background', [0]],  # 0 is background
             1: ['hair', [1, 2]],  # 1 and 2 are hair
             2: ['face', [4, 13]],
-            3: ['upper', [5, 6, 7]],
+            3: ['upper', [5, 6, 7, 10]],    # 10 is jumpsuit
             4: ['bottom', [9, 12]],
             5: ['left_arm', [14]],
             6: ['right_arm', [15]],
@@ -201,10 +201,12 @@ class VitonHDDataset(data.Dataset):
 
             parse_cloth = (parse_array == 5).astype(np.float32) + \
                           (parse_array == 6).astype(np.float32) + \
-                          (parse_array == 7).astype(np.float32)
+                          (parse_array == 7).astype(np.float32) + \
+                          (parse_array == 10).astype(np.float32)
             parse_mask = (parse_array == 5).astype(np.float32) + \
                          (parse_array == 6).astype(np.float32) + \
-                         (parse_array == 7).astype(np.float32)
+                         (parse_array == 7).astype(np.float32) + \
+                         (parse_array == 10).astype(np.float32)
 
             parser_mask_fixed = parser_mask_fixed + (parse_array == 9).astype(np.float32) + \
                                 (parse_array == 12).astype(np.float32)  # the lower body is fixed
