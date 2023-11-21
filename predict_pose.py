@@ -87,7 +87,7 @@ def generate_pose_keypoints(img_file, pose_file):
     pose_model = general_pose_model(modelpath)
 
     res_points = pose_model.predict(img_file)
-    
+
     pose_data = {"version": 1.3,
                  "people":  [
                                 {
