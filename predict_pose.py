@@ -3,6 +3,40 @@ import numpy as np
 import os
 import json
 
+coco_points_name = {
+            "Nose": 0, "Neck": 1,
+            "RShoulder": 2, "RElbow": 3, "RWrist": 4,
+            "LShoulder": 5, "LElbow": 6, "LWrist": 7,
+            "RHip": 8, "RKnee": 9, "RAnkle": 10,
+            "LHip": 11, "LKnee": 12, "LAnkle": 13,
+            "REye": 14, "LEye": 15,
+            "REar": 16, "LEar": 17,
+            "Background": 18}
+
+body_25_points_name = {
+            "Nose": 0, "Neck": 1,
+            "RShoulder": 2, "RElbow": 3, "RWrist": 4,
+            "LShoulder": 5, "LElbow": 6, "LWrist": 7,
+            "MidHip": 8, "RHip": 9, "RKnee": 10,
+            "RAnkle": 11, "LHip": 12, "LKnee": 13,
+            "LAnkle": 14, "REye": 15, "LEye": 16,
+            "REar": 17, "LEar": 18, "LBigToe": 19,
+            "LSmallToe": 20, "LHeel": 21, "RBigToe": 22,
+            "RSmallToe": 23, "RHeel": 24, "Background": 25}
+
+coco_point_pairs = [[1, 0], [1, 2], [1, 5],
+                            [2, 3], [3, 4], [5, 6],
+                            [6, 7], [1, 8], [8, 9],
+                            [9, 10], [1, 11], [11, 12],
+                            [12, 13], [0, 14], [0, 15],
+                            [14, 16], [15, 17]]
+
+body_25_point_pairs = [[0, 1], [0, 15], [0, 16], [1, 2], [1, 5], [1, 8], [8, 9], [8, 12], [9, 10], [12, 13], [2, 3],
+                      [3, 4], [5, 6], [6, 7], [10, 11], [13, 14], [15, 17], [16, 18], [14, 21], [19, 21], [20, 21],
+                      [11, 24], [22, 24], [23, 24]]
+
+threshold = 0.1
+
 class general_coco_model(object):
     def __init__(self, modelpath):
         # Specify the model to be used
@@ -11,26 +45,13 @@ class general_coco_model(object):
         #   MPI:    15 points
         self.inWidth = 368
         self.inHeight = 368
-        self.threshold = 0.05
+        self.threshold = threshold
         self.pose_net = self.general_coco_model(modelpath)
 
     def general_coco_model(self, modelpath):
-        self.points_name = {
-            "Nose": 0, "Neck": 1, 
-            "RShoulder": 2, "RElbow": 3, "RWrist": 4,
-            "LShoulder": 5, "LElbow": 6, "LWrist": 7, 
-            "RHip": 8, "RKnee": 9, "RAnkle": 10, 
-            "LHip": 11, "LKnee": 12, "LAnkle": 13, 
-            "REye": 14, "LEye": 15, 
-            "REar": 16, "LEar": 17, 
-            "Background": 18}
+        self.points_name = coco_points_name
         self.num_points = 18
-        self.point_pairs = [[1, 0], [1, 2], [1, 5], 
-                            [2, 3], [3, 4], [5, 6], 
-                            [6, 7], [1, 8], [8, 9],
-                            [9, 10], [1, 11], [11, 12], 
-                            [12, 13], [0, 14], [0, 15], 
-                            [14, 16], [15, 17]]
+        self.point_pairs = coco_point_pairs
         prototxt   = os.path.join(
             modelpath, 
             'pose_deploy_linevec.prototxt')
@@ -89,21 +110,13 @@ class general_body25_model(object):
         #   MPI:    15 points
         self.inWidth = 368
         self.inHeight = 368
-        self.threshold = 0.1
+        self.threshold = threshold
         self.pose_net = self.general_body25_model(modelpath)
 
     def general_body25_model(self, modelpath):
-        self.points_name = {
-            "Nose": 0, "Neck": 1,
-            "RShoulder": 2, "RElbow": 3, "RWrist": 4,
-            "LShoulder": 5, "LElbow": 6, "LWrist": 7,
-            "MidHip": 8, "RHip": 9, "RKnee": 10,
-            "RAnkle": 11, "LHip": 12, "LKnee": 13,
-            "LAnkle": 14, "REye": 15, "LEye": 16,
-            "REar": 17, "LEar": 18, "LBigToe": 19,
-            "LSmallToe": 20, "LHeel": 21, "RBigToe": 22,
-            "RSmallToe": 23, "RHeel": 24, "Background": 25}
+        self.points_name = body_25_points_name
         self.num_points = 25
+        self.point_pairs = body_25_point_pairs
         prototxt   = os.path.join(
             modelpath,
             'pose_deploy.prototxt')
@@ -180,3 +193,31 @@ def generate_pose_keypoints(img_file, pose_file):
         outfile.write(json_object) 
     print('File saved at {}'.format(pose_keypoints_path))
 
+
+def generate_img_from_json(pose_file, img_file, save_path, model='body25'):
+    points_name = body_25_points_name if model == 'body25' else coco_points_name
+    point_pairs = body_25_point_pairs if model == 'body25' else coco_point_pairs
+    with open(pose_file) as f:
+        data = json.load(f)
+    pose_keypoints = data['people'][0]['pose_keypoints_2d']
+    img = cv2.imread(img_file)
+    img_height, img_width, _ = img.shape
+    for pair in point_pairs:
+        partA = pair[0]
+        partB = pair[1]
+        if pose_keypoints[partA*3+2] > threshold and pose_keypoints[partB*3+2] > threshold:
+            cv2.line(img, (int(pose_keypoints[partA*3]), int(pose_keypoints[partA*3+1])),
+                     (int(pose_keypoints[partB*3]), int(pose_keypoints[partB*3+1])), (0, 255, 0), 3)
+    for i in range(0, len(pose_keypoints), 3):
+        x = int(pose_keypoints[i])
+        y = int(pose_keypoints[i+1])
+        prob = pose_keypoints[i+2]
+        cv2.circle(img, (x, y), 5, (0, 255, 255), -1)
+        cv2.putText(img, str(i//3), (x + 5, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+    cv2.imwrite(save_path, img)
+    print('File saved at {}'.format(save_path))
+
+if __name__ == '__main__':
+    img_file = 'dataset/00006_00.jpg'
+    pose_file = 'dataset/00006_00_keypoints.json'
+    generate_img_from_json(pose_file, img_file, 'dataset/test_out.jpg', model='body25')
